@@ -1,7 +1,7 @@
 c.code "#include <stdio.h>";
 
 fn:bool main() = {
-	num x = 0;
-	printf("hello, world! -> %lf\n", x);
+	str message = "Hello, world!";
+	printf("%s\n", message);
 	c.code "return 0;";
 };

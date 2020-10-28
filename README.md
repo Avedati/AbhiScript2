@@ -18,6 +18,20 @@ The grammar of AbhiScript2 is as follows:
 	ASSIGNMENT = TYPE LITERAL "=" EXPR
 	FUNCTION = "fn" ":" TYPE LITERAL "(" [TYPE LITERAL "," TYPE LITERAL "," ... TYPE LITERAL] "=" "{" [STATEMENT STATEMENT ...] "}" ";"
 
+## Example
+
+Here is a hello world program written in AbhiScript2:
+
+```
+c.code "#include <stdio.h>"
+
+fn:bool main() = {
+	str message = "Hello, world!";
+	printf("%s\n", message);
+	c.code "return 0;";
+}
+```
+
 ## Getting Started
 ### Mac OS and Linux
 
