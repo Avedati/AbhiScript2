@@ -31,7 +31,7 @@ echo "export PATH=$(pwd)/bin:$PATH" >> ~/.zshrc
 
 ### Windows
 
-To install AbhiScript2 on Windows, you can install AbhiScript2 via the commands above in the Windows Subsystem for Linux (WSL).
+To install AbhiScript2 on Windows, you can use the commands above in the Windows Subsystem for Linux (WSL).
 If you do not have WSL, you will need to build AbhiScript2 from source. Make sure that you have rust installed on your system, navigate to this directory on your system, and type the following commands into your command prompt: 
 
 ```bash
