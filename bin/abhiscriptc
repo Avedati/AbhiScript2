@@ -1,0 +1,21 @@
+#!/bin/bash
+# https://stackoverflow.com/questions/6482377/check-existence-of-input-argument-in-a-bash-shell-script
+if [ $# -eq 0 ]; then
+	echo "Usage: abhiscriptc [OPTIONS] INPUT"
+	echo ""
+	echo "Options:"
+	echo -e "\t-o FILENAME\tWrite output to <filename>"
+elif [ $# -eq 3 ]; then
+	if [ $1 = "-o" ]; then
+		abhiscript_inner $3 > /tmp/intermediate.c
+		cc /tmp/intermediate.c -o a.out
+		mv a.out $2
+	elif [ $2 = "-o" ]; then
+		abhiscript_inner $1 > /tmp/intermediate.c
+		cc /tmp/intermediate.c -o a.out
+		mv a.out $3
+	fi
+else
+	abhiscript_inner $1 > /tmp/intermediate.c
+	cc /tmp/intermediate.c -o a.out
+fi

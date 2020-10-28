@@ -1,0 +1,7 @@
+c.code "#include <stdio.h>";
+
+fn:bool main() = {
+	num x = 0;
+	printf("hello, world! -> %lf\n", x);
+	c.code "return 0;";
+};
