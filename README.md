@@ -6,12 +6,13 @@ This is the second version of my programming language, AbhiScript. The syntax of
 
 The grammar of AbhiScript2 is as follows:
 
+	C_CODE = "c.code" STR ";"
 	LIST = "[" [EXPR "," EXPR "," ... EXPR] "]"
 	DICTIONARY = "{" [LITERAL ":" EXPR "," LITERAL ":" EXPR "," ... LITERAL ":" EXPR] "}"
 	UNIT = NUM or STR or BOOL or LITERAL or LIST or DICTIONARY or FUNCTIONCALL
 	ATOM = UNIT ("+" or "-") UNIT
 	EXPR = ATOM ("*" or "/" or "%") ATOM
-	STATEMENT = (FUNCTIONCALL | STRUCT | ASSIGNMENT | FUNCTION) ";"
+	STATEMENT = (FUNCTIONCALL | STRUCT | ASSIGNMENT | FUNCTION | C_CODE) ";"
 	FUNCTIONCALL = LITERAL "(" [EXPR "," EXPR "," EXPR "," ... EXPR] ")" ";"
 	STRUCT = "struct" LITERAL "{" [TYPE LITERAL ";" TYPE LITERAL ";" ... TYPE LITERAL] ";" "}" ";"
 	ASSIGNMENT = TYPE LITERAL "=" EXPR
