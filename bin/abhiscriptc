@@ -8,14 +8,26 @@ if [ $# -eq 0 ]; then
 elif [ $# -eq 3 ]; then
 	if [ $1 = "-o" ]; then
 		abhiscript_inner $3 > /tmp/intermediate.c
-		cc /tmp/intermediate.c -o a.out
+		if [[ -f CFLAGS ]]; then
+			echo "cc /tmp/intermediate.c $(more CFLAGS) -o a.out" | bash
+		else
+			cc /tmp/intermediate.c -o a.out
+		fi
 		mv a.out $2
 	elif [ $2 = "-o" ]; then
 		abhiscript_inner $1 > /tmp/intermediate.c
-		cc /tmp/intermediate.c -o a.out
+		if [[ -f CFLAGS ]]; then
+			echo "cc /tmp/intermediate.c $(more CFLAGS) -o a.out" | bash
+		else
+			cc /tmp/intermediate.c -o a.out
+		fi
 		mv a.out $3
 	fi
 else
 	abhiscript_inner $1 > /tmp/intermediate.c
-	cc /tmp/intermediate.c -o a.out
+	if [[ -f CFLAGS ]]; then
+		echo "cc /tmp/intermediate.c $(more CFLAGS) -o a.out" | bash
+	else
+		cc /tmp/intermediate.c -o a.out
+	fi
 fi

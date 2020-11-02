@@ -96,8 +96,6 @@ impl Tokenizer {
 				let mut lexeme: String = "".to_string();
 				while self.i < self.input.len() && (self.input.chars().nth(self.i).unwrap() != str_start) {
 					if self.input.chars().nth(self.i).unwrap() == '\\' {
-						let char_str = self.input.chars().nth(self.i).unwrap().to_string();
-						lexeme.push_str(&char_str);
 						self.i += 1;
 					}
 					let cs = self.input.chars().nth(self.i).unwrap().to_string();
