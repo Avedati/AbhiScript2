@@ -90,7 +90,7 @@ impl Tokenizer {
 					tokens.push(Token{line_number: line_no, token_type: "identifier".to_string(), lexeme: lexeme.to_string()});
 				}
 			}
-			else if self.input.chars().nth(self.i).unwrap() == '"' || self.input.chars().nth(self.i).unwrap() == '\'' {
+			else if self.input.chars().nth(self.i).unwrap() == '\"' || self.input.chars().nth(self.i).unwrap() == '\'' {
 				let str_start = self.input.chars().nth(self.i).unwrap();
 				self.i += 1;
 				let mut lexeme: String = "".to_string();
@@ -349,13 +349,46 @@ impl Parser {
 	}
 
 	fn parse_assignment(&mut self) -> String {
+		let mut is_pointer: bool = false;
+		let mut is_str_pointer: bool = false;
 		let mut result: String = "".to_string();
 		let r1 = self.expect_type("keyword").clone();
-		result.push_str(&(self.convert_type(r1)));
-		result.push_str(&(self.expect_type("identifier")));
+		if r1 == "num_ptr".to_string() {
+			result.push_str("int* ");
+			is_pointer = true;
+		}
+		else if r1 == "str_ptr".to_string() {
+			result.push_str("char* ");
+			is_pointer = true;
+			is_str_pointer = true;
+		}
+		else if r1 == "bool_ptr".to_string() {
+			result.push_str("int* ");
+			is_pointer = true;
+		}
+		else {
+			result.push_str(&(self.convert_type(r1)));
+		}
+		let name = self.expect_type("identifier").clone();
+		result.push_str(&name);
 		self.expect_token("punctuation", "=");
 		result.push_str("=");
-		result.push_str(&(self.parse_expr()));
+		if is_pointer {
+			if is_str_pointer {
+				result.push_str("(char*)malloc(sizeof(char*));\n");
+			}
+			else {
+				result.push_str(&("(int*)malloc(sizeof(int*))\n*".to_owned() + &name + " = "));
+			}
+		}
+		let name2 = name.clone();
+		let rval = self.parse_expr().clone();
+		if is_pointer && is_str_pointer {
+			result.push_str(&(name + &" = realloc(".to_owned() + &name2 + &", sizeof(char) * strlen(".to_owned() + &rval + &"));\nstrcpy(".to_owned() + &name2 + &", ".to_owned() + &rval + &")".to_owned()));
+		}
+		else {
+			result.push_str(&rval);
+		}
 		self.expect_token("punctuation", ";");
 		result.push_str(";");
 		return result;
@@ -415,26 +448,19 @@ impl Parser {
 }
 
 fn main() {
-	let keywords: Vec<String> = vec!["struct".to_string(), "fn".to_string(), "num".to_string(), "str".to_string(), "bool".to_string()];
+	let keywords: Vec<String> = vec!["struct".to_string(), "fn".to_string(), "num".to_string(), "str".to_string(), "bool".to_string(), "num_ptr".to_string(), "str_ptr".to_string(), "bool_ptr".to_string()];
 	let punctuation = vec![';', ',', '(', ')', '{', '}', ':', '=', '.','[',']'];
 	let operators = vec!['+', '-', '*', '/', '%']; // TODO: implement functions for relational operators (less than, less than or equal to, equal to, greater than, etc.).
 	if env::args().len() >= 2 {
 		let filename: String = env::args().nth(1).unwrap();
-		let contents: String = std::fs::read_to_string(&filename).unwrap();
+		let mut contents: String = std::fs::read_to_string(&filename).unwrap();
+		contents = "c.code \"#include<stdlib.h>\";\n".to_owned() + &contents;
+		contents = "c.code \"#include<string.h>\";\n".to_owned() + &contents;
 		let mut tokenizer = Tokenizer{input: contents, i: 0};
 		let tokens = tokenizer.tokenize(keywords, punctuation, operators);
-		// TODO: implement this as a command-line argument.
 		// for token in tokens { println!("Token: type: {}, lexeme: {}, line number: {}", token.token_type, token.lexeme, token.line_number); }
 		let mut parser = Parser{tokens: tokens, i: 0};
 		let result: String = parser.parse();
 		println!("{}", result);
 	}
-	/*
-	let mut tokenizer = Tokenizer{input: input, i: 0};
-	let tokens = tokenizer.tokenize(keywords, punctuation, operators);
-	// for token in tokens { println!("Token: type: {}, lexeme: {}, line number: {}", token.token_type, token.lexeme, token.line_number); }
-	let mut parser = Parser{tokens: tokens, i: 0};
-	let result: String = parser.parse();
-	println!("{}", result);
-	*/
 }

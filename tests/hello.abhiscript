@@ -1,7 +1,9 @@
 c.code "#include <stdio.h>";
 
 fn:bool main() = {
-	str message = "Hello, world!";
-	printf("%s\n", message);
+	str_ptr message = "Hello, world!";
+	printf("%s\\n", message);
+	free(message);
 	c.code "return 0;";
 };
+
