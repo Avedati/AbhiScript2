@@ -98,6 +98,9 @@ impl Tokenizer {
 					if self.input.chars().nth(self.i).unwrap() == '\\' {
 						self.i += 1;
 					}
+					else if self.input.chars().nth(self.i).unwrap() == '\n' {
+						line_no += 1;
+					}
 					let cs = self.input.chars().nth(self.i).unwrap().to_string();
 					lexeme.push_str(&cs);
 					self.i += 1;
@@ -155,7 +158,7 @@ impl Parser {
 			self.i += 1;
 			return self.tokens[self.i - 1].lexeme.clone();
 		}
-		panic!("Error on line {}, expected type {}, got type {}", self.tokens[self.i].line_number, token_type, self.tokens[self.i].token_type);
+		panic!("Error on line {}, expected type `{}`, got type `{}`", self.tokens[self.i].line_number, token_type, self.tokens[self.i].token_type);
 	}
 
 	fn expect_token(&mut self, token_type: &str, lexeme: &str) {
@@ -189,7 +192,7 @@ impl Parser {
 					converted
 				}
 				else {
-					panic!("Error, could not convert type {}.", lexeme);
+					panic!("Error, could not convert type `{}`.", lexeme);
 				}
 			}
 		}
@@ -219,7 +222,10 @@ impl Parser {
 	fn parse_unit(&mut self) -> String {
 		if self.match_type("identifier") {
 			if self.i + 1 < self.tokens.len() && self.tokens[self.i + 1].token_type == "punctuation" && self.tokens[self.i + 1].lexeme == "(" {
-				self.parse_function_call()
+				self.parse_function_call_unit()
+			}
+			else if self.match_token("identifier", "c.code") {
+				self.parse_c_code_unit()
 			}
 			else {
 				self.expect_type("identifier")
@@ -245,7 +251,7 @@ impl Parser {
 			}
 		}
 		else if self.match_token("punctuation", "{") {
-			self.parse_delimited(Token{line_number:0, token_type:"punctuation".to_string(), lexeme:"{".to_string()}, Token{line_number:0, token_type:"punctuation".to_string(), lexeme:"}".to_string()}, "{".to_string(), "}".to_string(),
+			self.parse_delimited(Token{line_number:self.tokens[self.i].line_number, token_type:"punctuation".to_string(), lexeme:"{".to_string()}, Token{line_number:self.tokens[self.i].line_number, token_type:"punctuation".to_string(), lexeme:"}".to_string()}, "{".to_string(), "}".to_string(),
 				|parser: &mut Parser| -> String {
 				let mut result: String = ".".to_string();
 				result.push_str(&(parser.expect_type("identifier")));
@@ -260,7 +266,7 @@ impl Parser {
 			})
 		}
 		else if self.match_token("punctuation", "[") {
-			self.parse_delimited(Token{line_number:0, token_type:"punctuation".to_string(), lexeme:"[".to_string()}, Token{line_number:0, token_type:"punctuation".to_string(), lexeme:"]".to_string()}, "{".to_string(), "}".to_string(),
+			self.parse_delimited(Token{line_number:self.tokens[self.i].line_number, token_type:"punctuation".to_string(), lexeme:"[".to_string()}, Token{line_number:self.tokens[self.i].line_number, token_type:"punctuation".to_string(), lexeme:"]".to_string()}, "{".to_string(), "}".to_string(),
 				|parser: &mut Parser| -> String {
 				parser.parse_expr()
 			},
@@ -270,7 +276,7 @@ impl Parser {
 			})
 		}
 		else {
-			panic!("Error on line {}, could not parse {} as unit.", self.tokens[self.i].line_number, self.tokens[self.i].lexeme)
+			panic!("Error on line `{}`, could not parse `{}` as unit.", self.tokens[self.i].line_number, self.tokens[self.i].lexeme)
 		}
 	}
 
@@ -301,7 +307,7 @@ impl Parser {
 		result.push_str(&function_type);
 		let function_name: String = self.expect_type("identifier");
 		result.push_str(&function_name);
-		let args: String = self.parse_delimited(Token{line_number:0, token_type:"punctuation".to_string(), lexeme:"(".to_string()}, Token{line_number: 0, token_type:"punctuation".to_string(), lexeme:")".to_string()}, "(".to_string(), ")".to_string(),
+		let args: String = self.parse_delimited(Token{line_number:self.tokens[self.i].line_number, token_type:"punctuation".to_string(), lexeme:"(".to_string()}, Token{line_number: self.tokens[self.i].line_number, token_type:"punctuation".to_string(), lexeme:")".to_string()}, "(".to_string(), ")".to_string(),
 			|parser: &mut Parser| -> String {
 			let arg_type = parser.expect_type("keyword");
 			let arg_name = parser.expect_type("identifier");
@@ -394,10 +400,10 @@ impl Parser {
 		return result;
 	}
 
-	fn parse_function_call(&mut self) -> String {
+	fn parse_function_call_unit(&mut self) -> String {
 		let mut result: String = "".to_string();
 		result.push_str(&(self.expect_type("identifier")));
-		result.push_str(&(self.parse_delimited(Token{line_number:0, token_type:"punctuation".to_string(),lexeme:"(".to_string()}, Token{line_number:0, token_type:"punctuation".to_string(),lexeme:")".to_string()}, "(".to_string(), ")".to_string(),
+		result.push_str(&(self.parse_delimited(Token{line_number:self.tokens[self.i].line_number, token_type:"punctuation".to_string(),lexeme:"(".to_string()}, Token{line_number:self.tokens[self.i].line_number, token_type:"punctuation".to_string(),lexeme:")".to_string()}, "(".to_string(), ")".to_string(),
 			|parser: &mut Parser| -> String {
 				return parser.parse_expr();
 			},
@@ -406,16 +412,26 @@ impl Parser {
 				return ",".to_string();
 			}
 		)));
+		return result;
+	}
+
+	fn parse_function_call(&mut self) -> String {
+		let mut result: String = self.parse_function_call_unit();
 		self.expect_token("punctuation", ";");
 		result.push_str(";");
 		return result;
 	}
 
-	fn parse_c_code(&mut self) -> String {
+	fn parse_c_code_unit(&mut self) -> String {
 		self.expect_token("identifier", "c.code");
 		let code: String = self.expect_type("string");
-		self.expect_token("punctuation", ";");
 		return code.clone();
+	}
+
+	fn parse_c_code(&mut self) -> String {
+		let result: String = self.parse_c_code_unit();
+		self.expect_token("punctuation", ";");
+		return result;
 	}
 
 	fn parse_statement(&mut self) -> String {
@@ -434,7 +450,7 @@ impl Parser {
 			}
 			return self.parse_function_call();
 		}
-		panic!("Error on line {}, must parse function, struct, assignment, or identifier.", self.tokens[self.i].line_number);
+		panic!("Error on line `{}`, must parse function, struct, assignment, or identifier.", self.tokens[self.i].line_number);
 	}
 
 	fn parse(&mut self) -> String {
